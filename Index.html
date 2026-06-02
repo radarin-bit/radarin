@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Live Scanner Absensi Kantor</title>
-    <!-- Engine Scanner Utama jsQR -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         * { 
@@ -56,7 +55,7 @@
         .target-box { 
             width: 260px; 
             height: 260px; 
-            border: 4px solid #198754; 
+            border: 4px solid #10b981; /* Warna hijau emerald sesuai tema web absen */
             border-radius: 24px; 
             box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.6); 
             position: relative; 
@@ -68,7 +67,7 @@
             position: absolute; 
             width: 20px; 
             height: 20px; 
-            border-color: #ffc107; 
+            border-color: #ffffff; 
             border-style: solid; 
             border-width: 0; 
         }
@@ -94,7 +93,7 @@
             left: 5%; 
             width: 90%; 
             height: 3px; 
-            background: linear-gradient(90deg, transparent, #198754, transparent); 
+            background: linear-gradient(90deg, transparent, #10b981, transparent); 
             animation: scanMove 2s linear infinite; 
         }
         .hint-text { 
@@ -152,7 +151,7 @@
             <div class="target-box">
                 <div class="scan-line"></div>
             </div>
-            <div class="hint-text">Paskan QR Kupon di dalam kotak</div>
+            <div class="hint-text">Paskan QR Absen Kantor di dalam kotak</div>
         </div>
     </div>
 
@@ -161,7 +160,6 @@
         let currentStream = null;
         let animationId = null;
 
-        // Inisialisasi hardware kamera di domain HTTPS bersih luar sandbox
         navigator.mediaDevices.getUserMedia({
             video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 }, focusMode: 'continuous' },
             audio: false
@@ -175,7 +173,6 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // Real-time loop scanner 60 FPS
                 const tick = () => {
                     if (video.readyState === video.HAVE_ENOUGH_DATA) {
                         canvas.width = video.videoWidth;
@@ -185,18 +182,15 @@
                         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                         const code = jsQR(imageData.data, canvas.width, canvas.height);
                         
-                        // Jika QR Code warga terdeteksi masuk kotak target
                         if (code && code.data.trim() !== "") {
-                            // Oper teks QR ke Web App utama (NoorMosque)
+                            // REVISI (FIX): Format PostMessage dibikin string murni biar nyambung ke Scripts.html kita
                             if (window.opener) {
-                                window.opener.postMessage({ type: 'NOORMOSQUE_QR_DATA', data: code.data }, '*');
+                                window.opener.postMessage(code.data, '*');
                             }
                             
-                            // Matikan stream hardware kamera
                             if (currentStream) {
                                 currentStream.getTracks().forEach(track => track.stop());
                             }
-                            // Auto close jendela popup melayang kembali ke dasbor
                             window.close();
                             return;
                         }
@@ -211,7 +205,6 @@
             window.close();
         });
 
-        // Bersihkan memori jika jendela ditutup paksa
         window.addEventListener('unload', () => {
             if (animationId) cancelAnimationFrame(animationId);
             if (currentStream) currentStream.getTracks().forEach(track => track.stop());
